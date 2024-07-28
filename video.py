@@ -5,8 +5,8 @@ cap = cv2.VideoCapture(0)
 cv2.namedWindow('result')
 
 ranges = {
-    'min_h1': {'current': 0, 'max': 180},
-    'max_h1': {'current': 0, 'max': 180},
+    'min_h1': {'current': 20, 'max': 180},
+    'max_h1': {'current': 40, 'max': 180},
 }
 
 
@@ -32,12 +32,39 @@ while True:
 
     frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    min_ = (ranges['min_h1']['current'], 50, 0)
+    min_ = (ranges['min_h1']['current'], 20, 0)
     max_ = (ranges['max_h1']['current'], 255, 255)
 
     mask = cv2.inRange(frame_hsv, min_, max_)
-
     result = cv2.bitwise_and(frame, frame, mask=mask)
+
+    # Ищем контуры
+    contours = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    # Сами структуры контуров хранятся в начальном элементе возвращаемого значения:
+    contours = contours[0]
+
+    # Их, кстати, может и не быть:
+    if contours:
+
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
+        # Третий аргумент — это индекс контура, который мы хотим вывести. Мы хотим самый большой.
+        # Вывести все можно, передав -1 вместо 0:
+        cv2.drawContours(result, contours, -1, (255, 0, 0), 1)
+
+        for idx, c in enumerate(contours, start=0):
+            print(idx)
+            # Получаем прямоугольник, обрамляющий наш контур:
+            (x, y, w, h) = cv2.boundingRect(contours[idx])
+
+            # И выводим его:
+            cv2.rectangle(result, (x, y), (x+w, y+h), (0, 255, 0), 1)
+
+            # Аналогично строим минимальную описанную вокруг наибольшего контура окружность:
+            (x1, y1), radius = cv2.minEnclosingCircle(contours[idx])
+            center = (int(x1), int(y1))
+            radius = int(radius)
+            cv2.circle(result, center, radius, (0, 255, 0), 1)
 
     cv2.imshow('mask', mask)
     cv2.imshow('result', result)
