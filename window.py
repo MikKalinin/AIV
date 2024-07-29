@@ -14,12 +14,10 @@ while searching_attempt <= 5:
     nfs_window_location = pyautogui.locateOnScreen(title)
 
     if nfs_window_location is not None:
-        print('nfs_window_location = ', nfs_window_location)
         break
     else:
         searching_attempt += 1
         time.sleep(1)
-        print("attempt %d..." % searching_attempt)
 
 if nfs_window_location is None:
     print('NFS Window not found')
@@ -31,12 +29,15 @@ top = nfs_window_location[1]+nfs_window_location[3]
 window_resolution = (800, 600)
 
 window = (left, top, left+window_resolution[0], top+window_resolution[1])
-print(type(left), type(top), window_resolution[0], window_resolution[1])
 cv2.namedWindow('result')
-
+'''
 ranges = {
-    'min_h1': {'current': 20, 'max': 180},
-    'max_h1': {'current': 40, 'max': 180},
+    'min_s2': {'current': 20, 'max': 255},
+    'min_v2': {'current': 40, 'max': 255},
+    'min_h2': {'current': 170, 'max': 180},
+    'max_h2': {'current': 180, 'max': 180},
+    'min_s1': {'current': 0, 'max': 255},
+    'min_v1': {'current': 0, 'max': 255},
 }
 
 
@@ -55,7 +56,7 @@ for name in ranges:
                        ranges[name]['max'],
                        trackbar_handler(name)
                        )
-
+'''
 while True:
 
     pix = pyautogui.screenshot(region=(int(left), int(top), window_resolution[0], window_resolution[1]))
@@ -64,15 +65,15 @@ while True:
     numpix_hsv = cv2.cvtColor(np.array(pix), cv2.COLOR_RGB2HSV)
     numpix_hsv = numpix_hsv[window_resolution[1]//2:, :, :]
 
-    min_g = (58, 50, 0)
-    max_g = (63, 255, 255)
+    min_g = (51, 81, 55)
+    max_g = (61, 255, 255)
 
-    min_y = (25, 50, 50)
+    min_y = (18, 132, 143)
     max_y = (30, 255, 255)
 
-    min_r1 = (0, 50, 0)
-    max_r1 = (10, 255, 255)
-    min_r2 = (170, 50, 0)
+    min_r1 = (0, 143, 33)
+    max_r1 = (5, 255, 255)
+    min_r2 = (177, 144, 32)
     max_r2 = (180, 255, 255)
 
     mask_g = cv2.inRange(numpix_hsv, min_g, max_g)
@@ -83,6 +84,8 @@ while True:
     mask = cv2.bitwise_or(mask_g, mask_y)
     mask = cv2.bitwise_or(mask, mask_r1)
     mask = cv2.bitwise_or(mask, mask_r2)
+
+    mask_r = cv2.bitwise_or(mask_r1, mask_r2)
 
     result = cv2.bitwise_and(numpix, numpix, mask=mask)
 
@@ -110,6 +113,9 @@ while True:
 
             cv2.circle(result, center, radius, (0, 255, 0), 1)
             cv2.line(result, startP, center, (0, 255, 0), 1)
+
+            print(x1 - Y//2)
+            break
 
     cv2.imshow('result', result)
     cv2.imshow('mask', mask)
