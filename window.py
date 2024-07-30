@@ -3,6 +3,9 @@ import time
 import numpy as np
 import cv2
 import imutils
+import keyboard1 as kb
+import threading as th
+
 print('waiting for 2 seconds...')
 time.sleep(2)
 
@@ -28,7 +31,6 @@ top = nfs_window_location[1]+nfs_window_location[3]
 
 window_resolution = (800, 600)
 
-window = (left, top, left+window_resolution[0], top+window_resolution[1])
 cv2.namedWindow('result')
 '''
 ranges = {
@@ -58,7 +60,6 @@ for name in ranges:
                        )
 '''
 while True:
-
     pix = pyautogui.screenshot(region=(int(left), int(top), window_resolution[0], window_resolution[1]))
     numpix = cv2.cvtColor(np.array(pix), cv2.COLOR_RGB2BGR)
     numpix = numpix[window_resolution[1]//2:, :, :]
@@ -93,7 +94,6 @@ while True:
     contours = contours[0]
 
     if contours:
-
         contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
         cv2.drawContours(result, contours, -1, (255, 0, 0), 1)
@@ -114,7 +114,12 @@ while True:
             cv2.circle(result, center, radius, (0, 255, 0), 1)
             cv2.line(result, startP, center, (0, 255, 0), 1)
 
-            print(x1 - Y//2)
+            track = x1 - Y//2
+
+            if track > 0:
+                kb.key_press(kb.SC_RIGHT)
+            if track < 0:
+                kb.key_press(kb.SC_LEFT)
             break
 
     cv2.imshow('result', result)
