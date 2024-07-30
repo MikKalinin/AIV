@@ -6,32 +6,35 @@ import imutils
 import keyboard1 as kb
 import threading as th
 
-print('waiting for 2 seconds...')
-time.sleep(2)
 
-title = './logo1.png'
+def ini():
+    print('waiting for 2 seconds...')
+    time.sleep(2)
 
-nfs_window_location = None
-searching_attempt = 1
-while searching_attempt <= 5:
-    nfs_window_location = pyautogui.locateOnScreen(title)
+    title = './logo1.png'
 
-    if nfs_window_location is not None:
-        break
-    else:
-        searching_attempt += 1
-        time.sleep(1)
+    nfs_window_location = None
+    searching_attempt = 1
+    while searching_attempt <= 5:
+        nfs_window_location = pyautogui.locateOnScreen(title)
 
-if nfs_window_location is None:
-    print('NFS Window not found')
-    exit(1)
+        if nfs_window_location is not None:
+            break
+        else:
+            searching_attempt += 1
+            time.sleep(1)
 
-left = nfs_window_location[0]
-top = nfs_window_location[1]+nfs_window_location[3]
+    if nfs_window_location is None:
+        print('NFS Window not found')
+        exit(1)
 
-window_resolution = (800, 600)
+    left = nfs_window_location[0]
+    top = nfs_window_location[1]+nfs_window_location[3]
 
-cv2.namedWindow('result')
+    window_resolution = (800, 600)
+
+    cv2.namedWindow('result')
+    return left, top, window_resolution
 '''
 ranges = {
     'min_s2': {'current': 20, 'max': 255},
@@ -59,46 +62,50 @@ for name in ranges:
                        trackbar_handler(name)
                        )
 '''
-while True:
-    pix = pyautogui.screenshot(region=(int(left), int(top), window_resolution[0], window_resolution[1]))
-    numpix = cv2.cvtColor(np.array(pix), cv2.COLOR_RGB2BGR)
-    numpix = numpix[window_resolution[1]//2:, :, :]
-    numpix_hsv = cv2.cvtColor(np.array(pix), cv2.COLOR_RGB2HSV)
-    numpix_hsv = numpix_hsv[window_resolution[1]//2:, :, :]
 
-    min_g = (51, 81, 55)
-    max_g = (61, 255, 255)
 
-    min_y = (18, 132, 143)
-    max_y = (30, 255, 255)
+def cont():
+    left, top, window_resolution = ini()
+    while True:
+        pix = pyautogui.screenshot(region=(int(left), int(top), window_resolution[0], window_resolution[1]))
+        numpix = cv2.cvtColor(np.array(pix), cv2.COLOR_RGB2BGR)
+        numpix = numpix[window_resolution[1]//2:, :, :]
+        numpix_hsv = cv2.cvtColor(np.array(pix), cv2.COLOR_RGB2HSV)
+        numpix_hsv = numpix_hsv[window_resolution[1]//2:, :, :]
 
-    min_r1 = (0, 143, 33)
-    max_r1 = (5, 255, 255)
-    min_r2 = (177, 144, 32)
-    max_r2 = (180, 255, 255)
+        min_g = (51, 81, 55)
+        max_g = (61, 255, 255)
 
-    mask_g = cv2.inRange(numpix_hsv, min_g, max_g)
-    mask_y = cv2.inRange(numpix_hsv, min_y, max_y)
-    mask_r1 = cv2.inRange(numpix_hsv, min_r1, max_r1)
-    mask_r2 = cv2.inRange(numpix_hsv, min_r2, max_r2)
+        min_y = (18, 132, 143)
+        max_y = (30, 255, 255)
 
-    mask = cv2.bitwise_or(mask_g, mask_y)
-    mask = cv2.bitwise_or(mask, mask_r1)
-    mask = cv2.bitwise_or(mask, mask_r2)
+        min_r1 = (0, 143, 33)
+        max_r1 = (5, 255, 255)
+        min_r2 = (177, 144, 32)
+        max_r2 = (180, 255, 255)
 
-    mask_r = cv2.bitwise_or(mask_r1, mask_r2)
+        mask_g = cv2.inRange(numpix_hsv, min_g, max_g)
+        mask_y = cv2.inRange(numpix_hsv, min_y, max_y)
+        mask_r1 = cv2.inRange(numpix_hsv, min_r1, max_r1)
+        mask_r2 = cv2.inRange(numpix_hsv, min_r2, max_r2)
 
-    result = cv2.bitwise_and(numpix, numpix, mask=mask)
+        mask = cv2.bitwise_or(mask_g, mask_y)
+        mask = cv2.bitwise_or(mask, mask_r1)
+        mask = cv2.bitwise_or(mask, mask_r2)
 
-    contours = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    contours = contours[0]
+        mask_r = cv2.bitwise_or(mask_r1, mask_r2)
 
-    if contours:
-        contours = sorted(contours, key=cv2.contourArea, reverse=True)
+        result = cv2.bitwise_and(numpix, numpix, mask=mask)
 
-        cv2.drawContours(result, contours, -1, (255, 0, 0), 1)
+        contours = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        contours = contours[0]
 
-        for idx, c in enumerate(contours, start=0):
+        if contours:
+            contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
+            cv2.drawContours(result, contours, -1, (255, 0, 0), 1)
+
+            idx = 0
             (x, y, w, h) = cv2.boundingRect(contours[idx])
 
             cv2.rectangle(result, (x, y), (x+w, y+h), (0, 255, 0), 1)
@@ -115,16 +122,25 @@ while True:
             cv2.line(result, startP, center, (0, 255, 0), 1)
 
             track = x1 - Y//2
+            tracker(track)
+        cv2.imshow('result', result)
+        cv2.imshow('mask', mask)
 
-            if track > 0:
-                kb.key_press(kb.SC_RIGHT)
-            if track < 0:
-                kb.key_press(kb.SC_LEFT)
+        if cv2.waitKey(1) == 27:
             break
+    cv2.destroyAllWindows()
 
-    cv2.imshow('result', result)
-    cv2.imshow('mask', mask)
-    if cv2.waitKey(1) == 27:
-        break
 
-cv2.destroyAllWindows()
+def tracker(track):
+    if 0 < track < 100:
+        kb.key_press(kb.SC_RIGHT)
+    if -100 < track < 0:
+        kb.key_press(kb.SC_LEFT)
+    if 100 <= track < 200:
+        kb.key_press(kb.SC_RIGHT, 0.5)
+    if -200 < track <= -100:
+        kb.key_press(kb.SC_LEFT, 0.5)
+    if track >= 200:
+        kb.key_press(kb.SC_RIGHT, 0.7)
+    if track <= -200:
+        kb.key_press(kb.SC_LEFT, 0.7)
