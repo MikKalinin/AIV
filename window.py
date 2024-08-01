@@ -3,9 +3,7 @@ import time
 import numpy as np
 import cv2
 import imutils
-
 from main import q, th
-
 
 print('waiting for 2 seconds...')
 time.sleep(2)
@@ -34,53 +32,26 @@ window_resolution = (800, 600)
 
 cv2.namedWindow('result')
 
-'''
-ranges = {
-    'min_s2': {'current': 20, 'max': 255},
-    'min_v2': {'current': 40, 'max': 255},
-    'min_h2': {'current': 170, 'max': 180},
-    'max_h2': {'current': 180, 'max': 180},
-    'min_s1': {'current': 0, 'max': 255},
-    'min_v1': {'current': 0, 'max': 255},
-}
-
-
-def trackbar_handler(name):
-    def handler(x):
-        global ranges
-        ranges[name]['current'] = x
-
-    return handler
-
-
-for name in ranges:
-    cv2.createTrackbar(name,
-                       'result',
-                       ranges[name]['current'],
-                       ranges[name]['max'],
-                       trackbar_handler(name)
-                       )
-'''
-
 th.start()
 
 while True:
     pix = pyautogui.screenshot(region=(int(left), int(top), window_resolution[0], window_resolution[1]))
     numpix = cv2.cvtColor(np.array(pix), cv2.COLOR_RGB2BGR)
+    numpix = cv2.GaussianBlur(numpix, (5, 5), 0)
     numpix = numpix[window_resolution[1]//2:, :, :]
     numpix_hsv = cv2.cvtColor(np.array(pix), cv2.COLOR_RGB2HSV)
     numpix_hsv = numpix_hsv[window_resolution[1]//2:, :, :]
 
-    min_g = (51, 81, 55)
-    max_g = (61, 255, 255)
+    min_g = (50, 120, 90)
+    max_g = (69, 220, 220)
 
-    min_y = (18, 132, 143)
-    max_y = (30, 255, 255)
+    min_y = (30, 100, 100)
+    max_y = (32, 255, 255)
 
-    min_r1 = (0, 143, 33)
-    max_r1 = (5, 255, 255)
-    min_r2 = (177, 144, 32)
-    max_r2 = (180, 255, 255)
+    min_r1 = (0, 130, 40)
+    max_r1 = (21, 160, 170)
+    min_r2 = (155, 135, 40)
+    max_r2 = (180, 155, 180)
 
     mask_g = cv2.inRange(numpix_hsv, min_g, max_g)
     mask_y = cv2.inRange(numpix_hsv, min_y, max_y)
@@ -93,7 +64,7 @@ while True:
 
     mask_r = cv2.bitwise_or(mask_r1, mask_r2)
 
-    result = cv2.bitwise_and(numpix, numpix, mask=mask)
+    result = cv2.bitwise_and(numpix, numpix)
 
     contours = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     contours = contours[0]
