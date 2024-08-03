@@ -7,6 +7,10 @@ cv2.namedWindow('result')
 ranges = {
     'min_h1': {'current': 20, 'max': 180},
     'max_h1': {'current': 40, 'max': 180},
+    'min_s1': {'current': 40, 'max': 255},
+    'max_s1': {'current': 255, 'max': 255},
+    'min_v1': {'current': 40, 'max': 255},
+    'max_v1': {'current': 255, 'max': 255},
 }
 
 
@@ -32,8 +36,8 @@ while True:
 
     frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    min_ = (ranges['min_h1']['current'], 20, 0)
-    max_ = (ranges['max_h1']['current'], 255, 255)
+    min_ = (ranges['min_h1']['current'], ranges['min_s1']['current'], ranges['min_v1']['current'])
+    max_ = (ranges['max_h1']['current'], ranges['max_s1']['current'], ranges['max_v1']['current'])
 
     mask = cv2.inRange(frame_hsv, min_, max_)
     result = cv2.bitwise_and(frame, frame, mask=mask)
@@ -52,19 +56,18 @@ while True:
         # Вывести все можно, передав -1 вместо 0:
         cv2.drawContours(result, contours, -1, (255, 0, 0), 1)
 
-        for idx, c in enumerate(contours, start=0):
-            print(idx)
-            # Получаем прямоугольник, обрамляющий наш контур:
-            (x, y, w, h) = cv2.boundingRect(contours[idx])
+        idx = 0
+        # Получаем прямоугольник, обрамляющий наш контур:
+        (x, y, w, h) = cv2.boundingRect(contours[idx])
 
-            # И выводим его:
-            cv2.rectangle(result, (x, y), (x+w, y+h), (0, 255, 0), 1)
+        # И выводим его:
+        cv2.rectangle(result, (x, y), (x+w, y+h), (0, 255, 0), 1)
 
-            # Аналогично строим минимальную описанную вокруг наибольшего контура окружность:
-            (x1, y1), radius = cv2.minEnclosingCircle(contours[idx])
-            center = (int(x1), int(y1))
-            radius = int(radius)
-            cv2.circle(result, center, radius, (0, 255, 0), 1)
+        # Аналогично строим минимальную описанную вокруг наибольшего контура окружность:
+        (x1, y1), radius = cv2.minEnclosingCircle(contours[idx])
+        center = (int(x1), int(y1))
+        radius = int(radius)
+        cv2.circle(result, center, radius, (0, 255, 0), 1)
 
     cv2.imshow('mask', mask)
     cv2.imshow('result', result)

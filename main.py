@@ -1,36 +1,55 @@
 from threading import Thread
 import keyboard1 as kb
 from queue import Queue
-import time
 
 q = Queue()
 
 
-def constrain(val, min_val, max_val):
-    if val < min_val: return min_val
-    if val > max_val: return max_val
-    return val
+def tracker():
+    per = 1
+    while (track := q.get()) is not None:
+
+        limit1 = 100
+        limit2 = 200
+        limit3 = 50
+
+        if per > 3:
+            kb.key_press(kb.SC_DEL, interval=0.1)
+            per = 3
+
+        if per < 1:
+            kb.key_press(kb.SC_INS, interval=0.1)
+            per = 1
+
+        if -1*limit2 < track < limit2:
+            kb.key_up(kb.SC_LEFT)
+            kb.key_up(kb.SC_RIGHT)
+            kb.key_down(kb.SC_UP)
+            if per != 3 and per < 4:
+                kb.key_press(kb.SC_INS, interval=0.1)
+                per += 1
+
+        elif track > limit2:
+            kb.key_down(kb.SC_RIGHT)
+            kb.key_up(kb.SC_UP)
+            if per != 1:
+                kb.key_press(kb.SC_DEL, interval=0.1)
+                per -= 1
+
+        elif limit3 < track < limit1:
+            kb.key_press(kb.SC_LEFT, interval=0.03)
+            kb.key_press(kb.SC_RIGHT, interval=0.01)
+
+        elif -1*limit1 < track < -1*limit3:
+            kb.key_press(kb.SC_RIGHT, interval=0.03)
+            kb.key_press(kb.SC_LEFT, interval=0.01)
+
+        elif track < limit2:
+            kb.key_down(kb.SC_LEFT)
+            kb.key_up(kb.SC_UP)
+            if per != 1:
+                kb.key_press(kb.SC_DEL, interval=0.1)
+                per -= 1
 
 
-def pid(input, setpoint, kp, ki, kd, dt, minOut, maxOut):
-    err = setpoint - input
-    integral = 0
-    prevErr = 0
-    integral = constrain(integral + err * dt * ki, minOut, maxOut)
-    d = (err - prevErr) / dt
-    prevErr = err
-    return constrain(err * kp + integral + d * kd, minOut, maxOut)
-
-
-def tracker1():
-    while True:
-        track = q.get()
-
-        if track > 0:
-            kb.key_press(kb.SC_RIGHT)
-        if track < 0:
-            kb.key_press(kb.SC_LEFT)
-
-
-th = Thread(target=tracker1, daemon=True)
-
+th = Thread(target=tracker, daemon=True)
